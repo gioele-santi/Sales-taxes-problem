@@ -8,24 +8,24 @@ $default_exempt_list = ["book", "chocolate", "pill", "bandage", "bandages"];
 // output: array with tagged elements
 function parse_input_line($input_line) {
     
-    $words = explode(" ", $input_line);
+    $imported = (strpos($input_line, "imported") !== false); //position is not fixed
+    $words = explode(" ", str_replace("imported ", "", $input_line)); //remove if present
     
     $unit_price = floatval(array_pop($words));
     $unit_count = intval(array_shift($words));
-    $imported = in_array("imported", $words);
-    
-    /*    //Removing not necessary 
-    if ($imported) {
-        array_shift($words); //remove "imported"
-    }*/
     
     array_pop($words); //remove "at"
     $name = implode(" ", $words);
+
+    if ($imported) { //add imported at start of name
+        $name = "imported " . $name;
+    }
     
     return array("name"=>$name, "count"=>$unit_count, "price"=>$unit_price, "imported"=>$imported);
-    
 }
 
+//split lines of input and apply parse_input_line function
+//output: array containing details for each receipt line
 function parse_input($input) {
     $lines = explode(PHP_EOL, $input);
     $result = array();
@@ -84,6 +84,9 @@ function test_parse_input_line() {
         ),
         array("in"=>"2 book at 12.49",
             "out"=>array("name"=>"book", "count"=>2, "price"=>12.49, "imported"=>false)
+        ),
+        array("in"=>"3 box of imported chocolates at 11.25",
+            "out"=>array("name"=>"imported box of chocolates", "count"=>3, "price"=>11.25, "imported"=>true)
         )
     );
 
