@@ -2,7 +2,7 @@
 
 echo "Sales taxes problem\n";
 
-$default_exempt_list = ["book", "chocolate", "pill"];
+$default_exempt_list = ["book", "chocolate", "pill", "bandage", "bandages"];
 
 // input line pattern: [unit_count] [imported (opt)] [name] at [unit_price]
 // output: array with tagged elements
@@ -37,12 +37,17 @@ function parse_input($input) {
     return $result;
 }
 
-// [mock] check if name contains exempted products
+//check if name contains any exempted product
 function is_exempt($product_name, $exempt_list = []) {
+    foreach ($exempt_list as $word) {
+        if(strpos($product_name, $word) !== false) {
+            return true;
+        } 
+    }
     return false;
 }
 
-function make_receipt($voices) {
+function make_receipt($voices, $exempt_list = []) {
     
     $receipt_text = "";
     $taxes = 0.0;
@@ -54,7 +59,7 @@ function make_receipt($voices) {
             $line_total += $line_total * 0.05; //5%
         }
         
-        if (! is_exempt($voice["name"])) {
+        if (! is_exempt($voice["name"], $exempt_list)) {
             $line_tax = $line_total * 0.1; // 10%
             $line_total += $line_tax;
             $taxes += $line_tax;
@@ -97,19 +102,67 @@ function test_parse_input_line() {
     echo "Test input line parse: SUCCESS\n";
 }
 
-//test_parse_input_line();
+function test_is_exempt($exempt_list = []) {
+    $success = true;
+    $tests = array(
+        array("in"=>"imported box of chocolates", "out"=>true),
+        array("in"=>"bar of chocolate", "out"=>true),
+        array("in"=>"book", "out"=>true),
+        array("in"=>"books", "out"=>true),
+        
+        array("in"=>"packet of headache pills", "out"=>true),
+        array("in"=>"imported bottle of perfume", "out"=>false),
+        array("in"=>"music CD", "out"=>false),
+        );
+    
+    foreach ($tests as $test) {
+        $exempt = is_exempt($test["in"], $exempt_list);
+        $success = $success && ($exempt == $test["out"]);
+        if (!$success) {
+            echo "Test is exempt: FAIL\n";
+            print_r($test);
+            echo "return value was: " . ($exempt ? "TRUE": "FALSE");
+            return;
+        }
+    }
+    echo "Test is exempt: SUCCESS";
+}
 
-$input = "2 book at 12.49
+//test_parse_input_line();
+//test_is_exempt($default_exempt_list);
+
+
+$input1 = "2 book at 12.49
 1 music CD at 14.99
 1 chocolate bar at 0.85";
 
-$output = "2 book: 24.98
+$output1 = "2 book: 24.98
 1 music CD: 16.49
 1 chocolate bar: 0.85
 Sales Taxes: 1.50
 Total: 42.32";
 
-$voices = parse_input($input);
-print_r($voices);
-$receipt = make_receipt($voices);
+$input2 ="1 imported box of chocolates at 10.00
+1 imported bottle of perfume at 47.50";
+
+$output2 = "1 imported box of chocolates: 10.50
+1 imported bottle of perfume: 54.65
+Sales Taxes: 7.65
+Total: 65.15";
+
+$input3 = "1 imported bottle of perfume at 27.99
+1 bottle of perfume at 18.99
+1 packet of headache pills at 9.75
+3 box of imported chocolates at 11.25";
+
+$output3 = "1 imported bottle of perfume: 32.19
+1 bottle of perfume: 20.89
+1 packet of headache pills: 9.75
+3 imported box of chocolates: 35.55
+Sales Taxes: 7.90
+Total: 98.38";
+
+$voices = parse_input($input3);
+//print_r($voices);
+$receipt = make_receipt($voices, $default_exempt_list);
 echo($receipt);
