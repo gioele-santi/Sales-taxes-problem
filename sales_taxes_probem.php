@@ -75,7 +75,7 @@ function make_receipt($voices, $exempt_list = []) {
     }
     
     //add taxes and total
-    $receipt_text = sprintf("%sSales Taxes: %.2f\nTotal: %.2f", $receipt_text, $taxes, $total);
+    $receipt_text = sprintf("%sSales Taxes: %.2f\nTotal: %.2f\n", $receipt_text, $taxes, $total);
 
     return $receipt_text;
 }

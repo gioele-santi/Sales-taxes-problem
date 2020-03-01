@@ -29,7 +29,7 @@ else {
     
     //output
     if ($verbose) {
-        echo "\nLoaded input:\n\n";
+        echo "Loaded input:\n\n";
         echo $input;
         echo "\n\n";
         echo "\nOutput:\n\n";
