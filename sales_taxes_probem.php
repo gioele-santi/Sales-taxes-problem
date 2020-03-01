@@ -213,7 +213,7 @@ function test_perc_round() {
             echo "\n\nError in rounding:";
             echo "\nExpected output: " . $test["out"];
             echo "\nCurrent output: " . $round;
-            return
+            return;
         }
     }
     echo "\nTest rounding: SUCCESS";
@@ -222,4 +222,4 @@ function test_perc_round() {
 //test_parse_input_line();
 //test_is_exempt($default_exempt_list);
 //test_perc_round();
-test_make_receipt($default_exempt_list);
+//test_make_receipt($default_exempt_list);

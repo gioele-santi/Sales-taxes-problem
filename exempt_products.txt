@@ -1,0 +1,4 @@
+book
+chocolate
+pill
+bandage
