@@ -37,7 +37,8 @@ function parse_input($input) {
     return $result;
 }
 
-//check if name contains any exempted product
+//input: a product name, a list of exempted products
+//output: a bool, true if the name contains at least one of the provided words 
 function is_exempt($product_name, $exempt_list = []) {
     foreach ($exempt_list as $word) {
         if(strpos($product_name, $word) !== false) {
@@ -47,6 +48,8 @@ function is_exempt($product_name, $exempt_list = []) {
     return false;
 }
 
+//input: arrays with parsed product details
+//output: string with receipt text
 function make_receipt($voices, $exempt_list = []) {
     
     $receipt_text = "";
@@ -55,24 +58,43 @@ function make_receipt($voices, $exempt_list = []) {
     
     foreach ($voices as $voice) {
         $line_total = $voice["count"] * $voice["price"];
+        //check import
+        $import_tax = 0.00;
         if ($voice["imported"]) {
-            $line_total += $line_total * 0.05; //5%
+            $import_tax =  $voice["count"] * perc_round($voice["price"] * 0.05);
+        }
+
+        //check exemption
+        $sale_tax = 0.00;
+        if (! is_exempt($voice["name"], $exempt_list)) {
+            $sale_tax = perc_round($line_total * 0.1); // 10%
         }
         
-        if (! is_exempt($voice["name"], $exempt_list)) {
-            $line_tax = $line_total * 0.1; // 10%
-            $line_total += $line_tax;
-            $taxes += $line_tax;
-        }
+        $line_total += $sale_tax + $import_tax;
+        $taxes += $sale_tax + $import_tax;
         
         $total += $line_total;
-        $receipt_text = sprintf("%s\n%d %s: %.2f", $receipt_text, $voice["count"], $voice["name"], $line_total);
+        $receipt_text = $receipt_text . sprintf("%d %s: %.2f\n", $voice["count"], $voice["name"], $line_total);
     }
     
     //add taxes and total
-    $receipt_text = sprintf("%s\nSales Taxes: %.2f\nTotal: %.2f", $receipt_text, $taxes, $total);
+    $receipt_text = sprintf("%sSales Taxes: %.2f\nTotal: %.2f", $receipt_text, $taxes, $total);
 
     return $receipt_text;
+}
+
+//input: decimal number
+//output: number rounded up to the nearest 0.05
+function perc_round($value) {
+    //be sure to keep inly 2 decimal
+    $two_dec = round($value ,2,PHP_ROUND_HALF_UP);
+    $integer = $two_dec * 100;
+    $rem = $integer % 5;
+    if ($rem == 0) {
+        return $two_dec; // no need to round
+    }
+    $integer = $integer + 5 - $rem;
+    return $integer/100;
 }
 
 // tests
@@ -131,41 +153,73 @@ function test_is_exempt($exempt_list = []) {
     echo "Test is exempt: SUCCESS";
 }
 
-//test_parse_input_line();
-//test_is_exempt($default_exempt_list);
-
-
-$input1 = "2 book at 12.49
+function test_make_receipt($exempt_list = []) {
+    $tests = array(
+        array("in"=> "2 book at 12.49
 1 music CD at 14.99
-1 chocolate bar at 0.85";
-
-$output1 = "2 book: 24.98
+1 chocolate bar at 0.85", 
+"out"=> "2 book: 24.98
 1 music CD: 16.49
 1 chocolate bar: 0.85
 Sales Taxes: 1.50
-Total: 42.32";
-
-$input2 ="1 imported box of chocolates at 10.00
-1 imported bottle of perfume at 47.50";
-
-$output2 = "1 imported box of chocolates: 10.50
+Total: 42.32"),
+        array("in"=> "1 imported box of chocolates at 10.00
+1 imported bottle of perfume at 47.50", 
+"out"=> "1 imported box of chocolates: 10.50
 1 imported bottle of perfume: 54.65
 Sales Taxes: 7.65
-Total: 65.15";
-
-$input3 = "1 imported bottle of perfume at 27.99
+Total: 65.15"),
+        array("in"=> "1 imported bottle of perfume at 27.99
 1 bottle of perfume at 18.99
 1 packet of headache pills at 9.75
-3 box of imported chocolates at 11.25";
-
-$output3 = "1 imported bottle of perfume: 32.19
+3 box of imported chocolates at 11.25", 
+"out"=> "1 imported bottle of perfume: 32.19
 1 bottle of perfume: 20.89
 1 packet of headache pills: 9.75
 3 imported box of chocolates: 35.55
 Sales Taxes: 7.90
-Total: 98.38";
+Total: 98.38"),
+    );
+    
+    $success = true;
+    
+    foreach ($tests as $test) {
+        $voices = parse_input($test["in"]);
+        $receipt = make_receipt($voices, $exempt_list);
+        
+        if (strcmp($receipt, $test["out"]) != 0) {
+            echo "Receipt test: FAIL\n";
+            echo"Expected output: \n" .  $test["out"];
+            echo"\n\nCurrent output: \n" .  $receipt;
+            return;
+        }
+        
+    }
+    
+    echo "Receipt test: SUCCESS";
+}
 
-$voices = parse_input($input3);
-//print_r($voices);
-$receipt = make_receipt($voices, $default_exempt_list);
-echo($receipt);
+function test_perc_round() {
+    $tests = array(
+        array("in"=>7.63, "out"=>7.65),
+        array("in"=>0.00, "out"=>0.00),
+        array("in"=>1.499, "out"=>1.50)
+    );
+    
+    foreach ($tests as $test) {
+        $round = perc_round($test["in"]);
+        if($round != $test["out"]) {
+            echo "\nTest rounding: FAIL";
+            echo "\n\nError in rounding:";
+            echo "\nExpected output: " . $test["out"];
+            echo "\nCurrent output: " . $round;
+            return
+        }
+    }
+    echo "\nTest rounding: SUCCESS";
+}
+
+//test_parse_input_line();
+//test_is_exempt($default_exempt_list);
+//test_perc_round();
+test_make_receipt($default_exempt_list);
