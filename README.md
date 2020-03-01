@@ -18,7 +18,7 @@ To execute the program you need to provide at least the paths of two input **.tx
 
 To run the script use the following command:
 ```
-receipt.php input_1.txt exempt_products.txt
+receipt.php input_3.txt exempt_products.txt
 ```
 
 Output will have following format:
@@ -35,7 +35,7 @@ Total: 98.38
 
 It is possible to view information about loaded input by adding **-v** as third parameter:
 ```
-receipt.php input_1.txt exempt_products.txt -v
+receipt.php input_3.txt exempt_products.txt -v
 ```
 
 will output:
