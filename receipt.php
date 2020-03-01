@@ -6,7 +6,7 @@ if ($argc <=1) {
     echo "Missing arguments. Provide at least an input file.\n";
 }
 else {
-    $verbose = (in_array("-v", $argv)) ? true: false;
+    $verbose = (in_array("-v", $argv));
     
     //load input
     $input_path = $argv[1];
